@@ -3,177 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPT Chat Interface</title>
+    <title>GPT Assistant</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --error: #dc2626;
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        .input-group {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        input {
-            flex: 1;
-            padding: 0.8rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-        }
-        button {
-            padding: 0.8rem 1.5rem;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        button:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-        #response {
-            padding: 1.5rem;
-            background: #f8fafc;
-            border-radius: 0.5rem;
-            border: 2px solid #e2e8f0;
-            min-height: 100px;
-            white-space: pre-wrap;
-        }
-        .loading {
-            display: none;
-            color: #64748b;
-            margin: 1rem 0;
-        }
-        .error {
-            color: var(--error);
-            background: #fee2e2;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin: 1rem 0;
-        }
+        /* ... keep your existing styles ... */
     </style>
 </head>
 <body>
-    <h1>Chat with AI Assistant</h1>
-    
-    <div class="input-group">
-        <input type="text" id="query" 
-               placeholder="Ask me anything..."
-               aria-label="Question input">
-        <button id="askButton">Ask</button>
-    </div>
-
-    <div class="loading" id="loading">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-2 animate-spin">
-            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-        </svg>
-        Processing your question...
-    </div>
-
-    <div id="responseContainer">
-        <div id="response"></div>
-        <div id="errorMessage" class="error" hidden></div>
-    </div>
+    <h1>Ask GPT</h1>
+    <input type="text" id="query" placeholder="Type your question">
+    <button id="askButton">Ask</button>
+    <div id="loading" style="display:none;">Loading...</div>
+    <div id="response"></div>
 
     <script>
-        const API_ENDPOINT = 'https://kish-chat-gpt.onrender.com/gpt';
-        const MIN_LOADING_TIME = 500; // 0.5s minimum loading state
+        const API_URL = 'https://kish-chat-gpt.onrender.com/gpt';
 
-        const elements = {
-            query: document.getElementById('query'),
-            button: document.getElementById('askButton'),
-            loading: document.getElementById('loading'),
-            response: document.getElementById('response'),
-            error: document.getElementById('errorMessage')
-        };
-
-        async function handleAsk() {
+        async function fetchResponse(query) {
             const startTime = Date.now();
-            const query = elements.query.value.trim();
-            
-            // Reset states
-            elements.response.textContent = '';
-            elements.error.hidden = true;
-            elements.button.disabled = true;
-            elements.loading.style.display = 'flex';
-
             try {
-                if (!query) throw new Error('Please enter a question');
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const response = await fetch(`${API_ENDPOINT}?query=${encodeURIComponent(query)}`, {
+                // Force fresh request (cache-buster)
+                const url = `${API_URL}?query=${encodeURIComponent(query)}&_=${Date.now()}`;
+                
+                const response = await fetch(url, {
                     mode: 'cors',
-                    signal: controller.signal,
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     }
                 });
 
-                clearTimeout(timeoutId);
-
                 if (!response.ok) {
-                    const errorBody = await response.text();
-                    throw new Error(`API Error: ${response.status} - ${errorBody}`);
+                    const errorText = await response.text();
+                    throw new Error(`API Error ${response.status}: ${errorText}`);
                 }
 
                 const data = await response.json();
-                
+                console.log('Raw API Response:', data); // Critical for debugging
+
                 if (!data?.parts?.[0]?.text) {
-                    throw new Error('Invalid response format from API');
+                    throw new Error('API returned empty response');
                 }
 
-                elements.response.textContent = data.parts[0].text.trim();
+                return data.parts[0].text.trim();
+
+            } finally {
+                // Enforce minimum loading time (better UX)
+                const elapsed = Date.now() - startTime;
+                if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+            }
+        }
+
+        document.getElementById('askButton').addEventListener('click', async () => {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+
+            const responseDiv = document.getElementById('response');
+            const loading = document.getElementById('loading');
+
+            try {
+                loading.style.display = 'block';
+                responseDiv.textContent = '';
+
+                const answer = await fetchResponse(query);
+                responseDiv.textContent = answer;
 
             } catch (error) {
                 console.error('Error:', error);
-                elements.error.hidden = false;
-                elements.error.textContent = this.formatErrorMessage(error);
+                responseDiv.textContent = `Error: ${error.message}`;
                 
             } finally {
-                // Ensure minimum loading time for better UX
-                const elapsed = Date.now() - startTime;
-                const remainingDelay = Math.max(MIN_LOADING_TIME - elapsed, 0);
-                
-                setTimeout(() => {
-                    elements.button.disabled = false;
-                    elements.loading.style.display = 'none';
-                }, remainingDelay);
+                loading.style.display = 'none';
             }
-        }
-
-        function formatErrorMessage(error) {
-            if (error.name === 'AbortError') {
-                return 'Request timed out. Please check your internet connection.';
-            }
-            
-            if (error.message.includes('Failed to fetch')) {
-                return `Connection failed. Possible issues:
-- Backend service is down
-- Network blocked request
-- Invalid CORS configuration`;
-            }
-
-            return error.message;
-        }
-
-        // Event Listeners
-        elements.button.addEventListener('click', handleAsk);
-        elements.query.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleAsk();
         });
     </script>
 </body>
