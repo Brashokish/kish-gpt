@@ -1,151 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kish GPT - Cool Design</title>
-  <style>
-    /* Global Styles */
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fbc2eb, #a6c1ee, #ffecd2, #ff9a9e);
-      background-size: 400% 400%;
-      animation: glitter 10s ease infinite;
-      font-family: 'Arial', sans-serif;
-      overflow: hidden;
-    }
-
-    @keyframes glitter {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* Container Styles */
-    .container {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 2rem;
-      border-radius: 15px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      max-width: 500px;
-      width: 100%;
-    }
-
-    /* Heading Styles */
-    h1 {
-      font-size: 2.5rem;
-      background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fbc2eb, #a6c1ee, #ffecd2, #ff9a9e);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: glow 2s ease-in-out infinite alternate;
-      margin-bottom: 1.5rem;
-    }
-
-    @keyframes glow {
-      0% { filter: hue-rotate(0deg); }
-      100% { filter: hue-rotate(360deg); }
-    }
-
-    /* Form Styles */
-    form {
-      display: flex;
-      flex-direction: column;
-    }
-
-    input[type="text"] {
-      padding: 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      outline: none;
-    }
-
-    input[type="text"]::placeholder {
-      color: rgba(255, 255, 255, 0.7);
-    }
-
-    button {
-      padding: 0.75rem;
-      background: linear-gradient(45deg, #ff9a9e, #fbc2eb);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-    }
-
-    /* Response Styles */
-    .response {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
-      font-size: 1rem;
-      line-height: 1.5;
-      color: #fff;
-      white-space: pre-wrap;
-      animation: fadeIn 0.5s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Kish GPT</h1>
-    <form id="gptForm">
-      <input type="text" id="query" placeholder="Enter your query..." required>
-      <button type="submit">Get Response</button>
-    </form>
-    <div class="response" id="response"></div>
-  </div>
-
-  <script>
-    document.getElementById('gptForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const query = document.getElementById('query').value;
-      const responseDiv = document.getElementById('response');
-
-      responseDiv.textContent = 'Loading...';
-
-      try {
-        const response = await fetch('/gpt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch response');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 1.5 Pro Chat</title>
+    <style>
+        :root {
+            --primary: #4285f4;
+            --secondary: #34a853;
+            --background: #0f172a;
+            --text: #f8fafc;
         }
 
-        const data = await response.json();
-        responseDiv.textContent = data.response || data.error || 'No response received';
-      } catch (error) {
-        responseDiv.textContent = 'Error: ' + error.message;
-      }
-    });
-  </script>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .model-info {
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .chat-container {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            height: 60vh;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .message {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-message {
+            background: var(--primary);
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background: #334155;
+            margin-right: auto;
+            border: 1px solid #475569;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            background: #1e293b;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: 2px solid var(--primary);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gemini 1.5 Pro</h1>
+            <div class="model-info">Latest Version: 1.5 Pro (2024)</div>
+        </header>
+        
+        <div class="chat-container" id="chatContainer"></div>
+        
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button onclick="sendMessage()" id="sendBtn">
+                <span class="btn-text">Send</span>
+                <div class="loader hidden"></div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // UI States
+            sendBtn.disabled = true;
+            sendBtn.querySelector('.btn-text').classList.add('hidden');
+            sendBtn.querySelector('.loader').classList.remove('hidden');
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const { response: botResponse } = await response.json();
+                addMessage(botResponse, 'bot');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Failed to get response. Please try again.', 'bot');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.querySelector('.btn-text').classList.remove('hidden');
+                sendBtn.querySelector('.loader').classList.add('hidden');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Enter key support
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>
