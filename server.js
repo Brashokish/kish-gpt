@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require('path');
@@ -6,8 +7,23 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Security and middleware
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://127.0.0.1:8080']
+}));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  next();
+});
+
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI("AIzaSyAjcTtDzEYTsm68PVkDEzvVFHVPam-eHVE");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-pro-latest",
   systemInstruction: {
@@ -22,12 +38,7 @@ const model = genAI.getGenerativeModel({
   }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Routes
+// API endpoint
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -38,8 +49,16 @@ app.post('/api/chat', async (req, res) => {
     res.json({ response });
   } catch (error) {
     console.error("API Error:", error);
-    res.status(500).json({ error: "Failed to generate response" });
+    res.status(500).json({ 
+      error: "Failed to generate response",
+      details: process.env.NODE_ENV === 'development' ? error.message : null
+    });
   }
 });
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Access at: http://localhost:${port}`);
+  }
+});
