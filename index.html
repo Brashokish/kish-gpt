@@ -33,15 +33,18 @@
             }
 
             try {
-                const response = await fetch(`/gpt?query=${encodeURIComponent(query)}`);
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
+                const response = await fetch(`https://kish-chat-gpt.onrender.com/gpt?query=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error('API request failed');
+
+                const gpt = await response.json();
+                if (gpt && gpt.parts && gpt.parts[0] && gpt.parts[0].text) {
+                    document.getElementById('response').innerText = gpt.parts[0].text.trim();
+                } else {
+                    document.getElementById('response').innerText = 'Unexpected response format. Please try again later.';
                 }
-                const answer = await response.text();
-                document.getElementById('response').innerText = answer;
             } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('response').innerText = "Failed to get a response.";
+                console.error(error);
+                document.getElementById('response').innerText = 'An error occurred, please try again later.';
             }
         });
     </script>
