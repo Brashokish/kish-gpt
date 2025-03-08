@@ -5,7 +5,7 @@ const app = express();
 const port = 8080;
 
 // Your YouTube API key
-const apiKey = "AIzaSyAzVKQttzR760N9F1awRnejiSTcvfAyvI8"; 
+const apiKey = "AIzaSyAzVKQttzR760N9F1awRnejiSTcvfAyvI8";
 
 app.use(express.json());
 
@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
   res.send("YouTube API is running.");
 });
 
-// YouTube API endpoint for searching videos
+// YouTube API endpoint for searching videos and audios
 app.get('/youtube', async (req, res) => {
   const query = req.query.query || 'music'; // Default to 'music' if no query is provided
 
@@ -27,8 +27,9 @@ app.get('/youtube', async (req, res) => {
         part: 'snippet',
         q: query,
         key: apiKey,
-        maxResults: 5, // Adjust the number of results as needed
-        type: 'video', // Specify 'video' to fetch video content
+        maxResults: 10, // Adjust the number of results as needed
+        type: 'video', // Fetch videos (includes music videos)
+        videoCategoryId: 10, // Optional: Filter by music category (ID 10)
       },
     });
 
@@ -37,6 +38,7 @@ app.get('/youtube', async (req, res) => {
       description: item.snippet.description,
       thumbnail: item.snippet.thumbnails.default.url,
       videoId: item.id.videoId,
+      type: 'video', // Indicate that this is a video
     }));
 
     return res.status(200).json(videos);
