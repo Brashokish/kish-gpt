@@ -3,10 +3,9 @@ const axios = require('axios');
 
 const app = express();
 const port = 8080;
-const host = '0.0.0.0';
 
-// Replace with your actual YouTube API key
-const apiKey = "AIzaSyDL8lTQK78cwDfySVT_8JDbDXkgJyUcfV4"; 
+// Your YouTube API key
+const apiKey = "AIzaSyAzVKQttzR760N9F1awRnejiSTcvfAyvI8"; 
 
 app.use(express.json());
 
@@ -14,8 +13,14 @@ app.get('/', (req, res) => {
   res.send("YouTube API is running.");
 });
 
-// Function to fetch videos from YouTube API
-const fetchVideos = async (query) => {
+// YouTube API endpoint for searching videos
+app.get('/youtube', async (req, res) => {
+  const query = req.query.query || 'music'; // Default to 'music' if no query is provided
+
+  if (!query) {
+    return res.status(400).send("No query provided");
+  }
+
   try {
     const response = await axios.get(`https://www.googleapis.com/youtube/v3/search`, {
       params: {
@@ -27,48 +32,20 @@ const fetchVideos = async (query) => {
       },
     });
 
-    return response.data.items.map(item => ({
+    const videos = response.data.items.map(item => ({
       title: item.snippet.title,
       description: item.snippet.description,
       thumbnail: item.snippet.thumbnails.default.url,
       videoId: item.id.videoId,
     }));
+
+    return res.status(200).json(videos);
   } catch (error) {
     console.error("Error fetching videos:", error);
-    throw new Error("Failed to fetch videos");
+    return res.status(500).send("Failed to fetch videos");
   }
-};
+});
 
-// YouTube API endpoint for searching videos
-app.route('/youtube')
-  .get(async (req, res) => {
-    const query = req.query.query || 'Faded'; // Default to 'Faded' if no query is provided
-    if (!query) {
-      return res.status(400).send("No query provided");
-    }
-
-    try {
-      const videos = await fetchVideos(query);
-      return res.status(200).json(videos);
-    } catch (error) {
-      return res.status(500).send(error.message);
-    }
-  })
-  .post(async (req, res) => {
-    const query = req.body.query || 'Faded'; // Default to 'Faded' if no query is provided
-
-    if (!query) {
-      return res.status(400).send("No query provided");
-    }
-
-    try {
-      const videos = await fetchVideos(query);
-      return res.status(200).json(videos);
-    } catch (error) {
-      return res.status(500).send(error.message);
-    }
-  });
-
-app.listen(port, host, () => {
-  console.log(`YouTube API listening at http://${host}:${port}`);
+app.listen(port, () => {
+  console.log(`YouTube API listening at http://localhost:${port}`);
 });
