@@ -13,10 +13,10 @@ app.get('/', (req, res) => {
   res.send("YouTube API is running.");
 });
 
-// YouTube API endpoint for searching videos
+// YouTube API endpoint for searching videos and audio
 app.route('/youtube')
   .get(async (req, res) => {
-    const query = req.query.query;
+    const query = req.query.query || 'Faded'; // Default to 'Faded' if no query is provided
     if (!query) {
       return res.status(400).send("No query provided");
     }
@@ -28,6 +28,7 @@ app.route('/youtube')
           q: query,
           key: apiKey,
           maxResults: 5, // Adjust the number of results as needed
+          type: 'video', // Specify 'video' to fetch both videos and audio content
         },
       });
 
@@ -45,7 +46,7 @@ app.route('/youtube')
     }
   })
   .post(async (req, res) => {
-    const query = req.body.query;
+    const query = req.body.query || 'Faded'; // Default to 'Faded' if no query is provided
 
     if (!query) {
       return res.status(400).send("No query provided");
@@ -58,6 +59,7 @@ app.route('/youtube')
           q: query,
           key: apiKey,
           maxResults: 5, // Adjust the number of results as needed
+          type: 'video', // Specify 'video' to fetch both videos and audio content
         },
       });
 
